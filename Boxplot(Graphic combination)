@@ -1,0 +1,42 @@
+opar<-par(no.readonly = TRUE)
+Path="E:\\OneDrive - 西北农林科技大学\\研究生\\03-项目进展\\新建文件夹\\"
+setwd(Path)
+a=read.table("BEZVSDOM_50K20K.Fst_Pi_XPEHH.merge", header=T)
+#a[a$Chr==5,][a$Start >= 17920021 & a$Start<18730000,]
+data<-a[which(a$Chr==5 & a$Start >= 17920021 & a$Start <= 18730000),]
+#全局设置
+windowsFonts(Times=windowsFont(family = "Times New Roman"))
+#windowsFonts(arial=windowsFont(family = "Arial"))
+#par(family="arial")
+par(mfrow=c(3,1))
+##图1
+par(mar=c(2,4,1,1)+0.1)
+plot(data$Start+25000,data$Fst,type="n",xaxt="n",xlab="",ylab=expression(italic("F")[ST]))
+rect(18020021,-1,18099261,35,border=NA,col="gray")
+rect(18560001,-3,18630000,10,border=NA,col="gray")
+rect(18020021,-3,18099261,0.5,border=NA,col="gray",xpd=TRUE)
+rect(18560001,-3,18630000,0.5,border=NA,col="gray",xpd=TRUE)
+lines(data$Start+25000,data$Fst,type="l",xaxt="n",lwd=2)
+abline(h=c(0.195),col="red",lty=2)
+##图2
+par(mar=c(2,4,1,1)+0.1)
+plot(data$Start+25000,data$Pi,type="n",xaxt="n",xlab="",ylab="")
+title(ylab=tolower("Π ln-ratio"),family="Times")
+rect(18020021,-5,18099261,10,border=NA,col="gray",xpd=TRUE)
+rect(18560001,-5,18630000,10,border=NA,col="gray",xpd=TRUE)
+lines(data$Start+25000,data$Pi,type="l",lwd=2)
+abline(h=c(0.395),col="red",lty=2)
+##图3
+par(mar=c(4,4,1,1)+0.1)
+plot(data$Start+25000,data$XPEHH,type="n",xaxt="n",xlab="",ylab="XPEHH")
+rect(18020021,-1,18099261,35,border=NA,col="gray")
+rect(18560001,-3,18630000,10,border=NA,col="gray")
+rect(18020021,0,18099261,35,border=NA,col="gray",xpd=TRUE)
+rect(18560001,0,18630000,10,border=NA,col="gray",xpd=TRUE)
+lines(data$Start+25000,data$XPEHH,type="l",lwd=2)
+abline(h=c(2.10),col="red",lty=2)
+xvalue<-round(data$Start/1000000,1)
+axis(1,at=data$Start,labels=xvalue,las=0)
+title(xlab="Chromosome 5 (Mb)")
+pdf(file="plot1.pdf")
+dev.off()
