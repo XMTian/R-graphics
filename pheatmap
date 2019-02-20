@@ -1,0 +1,30 @@
+##Created on Thu Feb 20 15:08:10 CST 2019
+##@Mail: xmtian94e@163.com
+##@Author: X.M Tian
+
+library(pheatmap)
+Path="E:\\OneDrive - 西北农林科技大学\\研究生\\03-项目进展\\新建文件夹\\热图"
+setwd(Path)
+a=read.table("5_18510001_18680000.table.sort.frq.hap.group", header=T,sep="\t")
+##fetch the value that you need
+data<-t(data.matrix(a[which(a$chr==5),][,22:409]))
+##rename annotation row
+annotation_row = data.frame(GroupClass=as.vector(unlist(a[1,][,22:409])))
+rownames(annotation_row) = rownames(data)
+##reassign annotation colors
+ann_colors = list(GroupClass = c(AFR="#873186", BEZ1 = "#E20593",BEZ2 = "#E20593",BEZ3="#e20593",EAS="#6BB93F",EUR="#18A2CA", IBEX = "#3364BC",OUT = "#000000",SA="#F37020",SWA="#DBB71D"))
+pheatmap(data,annotation_row = annotation_row,annotation_colors = ann_colors,cluster_row = FALSE,cluster_col = FALSE,
++ gaps_row=c(6,20,34,48,68,108,204,276,294),legend =FALSE,labels_col = rep("",ncol(data)),labels_row=rep("",nrow(data)),
++ color=c("#F7F8D5", "#BF3826"),cellwidth = 0.4,cellheight = 0.5,angle_col = "0")
+
+
+##注释
+##上面设置了gaps_row
+pheatmap(gaps_row=c(6,20,34,48,68,108,204,276,294))
+##不再显示横纵列标签，使用的是""来代替，生成列数量的""
+pheatmap(labels_col = rep("",ncol(data)),labels_row=rep("",nrow(data)))
+##重新定义注释的颜色（先将列名定义为data.frame中的GroupClass，然后，根据对应的分组，指定ann_colors，这里生命ann_colors为一个列表，列表的名字也为GroupClass）
+annotation_row = data.frame(GroupClass=as.vector(unlist(a[1,][,22:409])))
+rownames(annotation_row) = rownames(data)
+ann_colors = list(GroupClass = c(AFR="#873186", BEZ1 = "#E20593",BEZ2 = "#E20593",BEZ3="#e20593",EAS="#6BB93F",EUR="#18A2CA", IBEX = "#3364BC",OUT = "#000000",SA="#F37020",SWA="#DBB71D"))
+pheatmap(data,annotation_colors = ann_colors)
