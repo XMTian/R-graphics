@@ -1,0 +1,47 @@
+path="E:\\OneDrive - 西北农林科技大学\\研究生\\03-项目进展\\04-人泛基因组\\13-画图\\test"
+setwd(path)
+assembly_len<-read.table("assembly-len.txt",header=T,sep="\t")
+a1VSa2<-read.table("assembly1VSassembly2.txt",header=T,sep="\t")
+a1VSa3<-read.table("assembly1VSassembly3.txt",header=T,sep="\t")
+par(xaxs="i",yaxs="i",lend=2)
+plot(1:10,axes=F,xlim=c(-5,215),ylim=c(-1,21),type="n",xpd=NA,xlab="Alignment",ylab="Assembly")
+rect(0,20,unlist(assembly_len[which(assembly_len$assembly == "assembly1"),][4]),20+0.3,col="black",border=NA)
+rect(0,10,unlist(assembly_len[which(assembly_len$assembly == "assembly2"),][4]),10+0.3,col="black",border=NA)
+rect(0,0,unlist(assembly_len[which(assembly_len$assembly == "assembly3"),][4]),0+0.3,col="black",border=NA)
+vcol<-ifelse(id>=90,'red','green')
+for (start1 in a1VSa2$a1_start) {
+  p1<-a1VSa2[a1VSa2$a1_start==start1,]
+  xx1<-c(p1$a1_start,p1$a2_start)
+  xx2<-c(p1$a1_end,p1$a2_end)
+  yy<-c(20,10)
+  lines(xx1,yy,lty=2)
+  lines(xx2,yy,lty=2)
+  rect(p1$a1_start,20,p1$a1_end,20+0.3,col=ifelse(p1$ident>=90,"blue","red"),border=NA)
+  rect(p1$a2_start,10,p1$a2_end,10+0.3,col=ifelse(p1$ident>=90,"blue","red"),border=NA)
+  text((p1$a1_start+p1$a2_start)/2+(p1$a1_end-p1$a1_start)/2,15,paste(p1$ident,"%",sep=""),cex=0.8)
+}
+for (start1 in a1VSa3$a1_start) {
+  p1<-a1VSa3[a1VSa3$a1_start==start1,]
+  xx1<-c(p1$a1_start,p1$a2_start)
+  xx2<-c(p1$a1_end,p1$a2_end)
+  yy<-c(20,0)
+  lines(xx1,yy,lty=2)
+  lines(xx2,yy,lty=2)
+  text((p1$a1_start+p1$a2_start)/2+(p1$a1_end-p1$a1_start)/2,5,paste(p1$ident,"%",sep=""),cex=0.8)
+  #rect(p1$a1_start,10,p1$a1_end,10+0.3,col="black",border=NA)
+  #rect(p1$a2_start,0,p1$a2_end,0+0.3,col="black",border=NA)
+}
+
+
+##备注
+#infile
+#assembly-len.txt
+assembly	chr	start	end
+assembly1	chr1	0	210
+assembly2	chr1	0	125
+assembly3	chr1	0	195
+#assembly1VSassembly2.txt
+assembly1	a1_chr	a1_start	a1_end	assembly2	a2_chr	a2_start	a2_end	ident
+assembly1	chr1	40	48	assembly2	chr1	0	8	91.6
+assembly1	chr1	55	80	assembly2	chr1	18	43	89.6
+assembly1	chr1	90	115	assembly2	chr1	100	125	85.2
