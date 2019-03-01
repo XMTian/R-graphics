@@ -1,0 +1,89 @@
+library(RColorBrewer)
+library(scales)
+path="E:\\OneDrive - 西北农林科技大学\\研究生\\03-项目进展\\04-人泛基因组\\09-染色体定位\\plot2"
+setwd(path)
+size<-read.table("Chr.size",stringsAsFactors=F,sep="\t")
+info<-read.table("plot.input",stringsAsFactors=F,sep="\t")
+oup<-"out16.pdf"
+
+
+########round_loci
+wid<-0.2
+r<-5000000
+z<-seq(0,2*pi,length=1000)
+x<-cos(z)*wid
+y<-sin(z)*r
+###########plot
+opar<-par(no.readonly = TRUE)
+pdf(oup,w=18,h=12)
+par(mfrow=c(2,1))
+##########plot figure1
+par(xaxs='i',yaxs='i',lend=2,mar=c(2,0.5,0.5,0.5))
+plot(1:10,axes=F,xlab="",mgp = c(3, 0, 0),ylab="",xlim=c(0,13),ylim=c(-r,max(size)+2*r),type='n',xpd=NA)
+
+for (chr in size$V1[1:12]) {
+  csize<-size[size$V1==chr,]
+  cinfo<-info[info$V1==chr,]
+  utr<-info[info$V1==chr,][which(cinfo$V6 == "UTR"),]
+  cds<-info[info$V1==chr,][which(cinfo$V6 == "CDS"),]
+  ##plot chromosome
+  px<-c(csize$V1-wid,x[501:1000]+csize$V1,csize$V1+wid,csize$V1+wid,x[0:500]+csize$V1,csize$V1-wid,csize$V1-wid)
+  py<-c(r,y[501:1000]+r,r,r+max(csize$V2),r+max(csize$V2)+y[0:500],r+max(csize$V2),r)
+  polygon(px,py,border='black',lwd=0.5,col=adjustcolor("grey",alpha.f = 0.05),xpd=NA)
+  ##plot insertion info
+  col1<-col_factor(c(adjustcolor('#CA151D',alpha.f=0.3),adjustcolor('#214DA0',alpha.f=0.3)),levels=c("insertion","allele"))(cinfo$V4)
+  #rect(csize$V1-wid,r+cinfo$V2,csize$V1+wid,r+cinfo$V3,border="NA",col=col1)
+  rect(csize$V1-wid,r+cinfo$V2,csize$V1+wid,r+cinfo$V2+5000,border="NA",col=col1)
+  ##plot gene
+  if (nrow(utr)==0) {
+    col2 = c() 
+  } else {
+    col2<-col_factor(c(adjustcolor('#CA151D',alpha.f=1),adjustcolor('#214DA0',alpha.f=1)),levels=c("insertion","allele"))(utr$V4)
+    col1<-col_factor(c(adjustcolor('#CA151D',alpha.f=1),adjustcolor('#214DA0',alpha.f=1)),levels=c("insertion","allele"))(utr$V4)
+    rect(csize$V1-wid,r+utr$V2,csize$V1+wid,r+utr$V2+5000*80,border="NA",col=col1)
+    text(csize$V1+wid*3,r+utr$V2,utr$V5,cex=1,col="red")
+  }
+  if (nrow(cds)==0) {
+    col2 = c()
+  } else {
+    col2<-col_factor(c(adjustcolor('#CA151D',alpha.f=1),adjustcolor('#214DA0',alpha.f=1)),levels=c("insertion","allele"))(cds$V4)
+    col1<-col_factor(c(adjustcolor('#CA151D',alpha.f=1),adjustcolor('#214DA0',alpha.f=1)),levels=c("insertion","allele"))(cds$V4)
+    rect(csize$V1-wid,r+cds$V2,csize$V1+wid,r+cds$V2+5000*80,border="NA",col=col1)
+    text(csize$V1+wid*3,r+cds$V2,cds$V5,cex=1,col="blue")
+  }
+}
+##plot figure2
+par(xaxs='i',yaxs='i',lend=2,mar=c(2,0.5,0.5,0.5))
+plot(1:10,axes=F,xlab="",mgp = c(3, 0, 0),ylab="",xlim=c(12,25),ylim=c(-r,max(size$V2[13:24])+2*r),type='n',xpd=NA)
+for (chr in size$V1[13:24]) {
+  csize<-size[size$V1==chr,]
+  cinfo<-info[info$V1==chr,]
+  utr<-info[info$V1==chr,][which(cinfo$V6 == "UTR"),]
+  cds<-info[info$V1==chr,][which(cinfo$V6 == "CDS"),]
+  ##plot chromosome
+  px<-c(csize$V1-wid,x[501:1000]+csize$V1,csize$V1+wid,csize$V1+wid,x[0:500]+csize$V1,csize$V1-wid,csize$V1-wid)
+  py<-c(r,y[501:1000]+r,r,r+max(csize$V2),r+max(csize$V2)+y[0:500],r+max(csize$V2),r)
+  polygon(px,py,border='black',lwd=0.5,col=adjustcolor("grey",alpha.f = 0.05),xpd=NA)
+  ##plot insertion info
+  col1<-col_factor(c(adjustcolor('#CA151D',alpha.f=0.3),adjustcolor('#214DA0',alpha.f=0.3)),levels=c("insertion","allele"))(cinfo$V4)
+  #rect(csize$V1-wid,r+cinfo$V2,csize$V1+wid,r+cinfo$V3,border="NA",col=col1)
+  rect(csize$V1-wid,r+cinfo$V2,csize$V1+wid,r+cinfo$V2+5000,border="NA",col=col1)
+  ##plot gene
+  if (nrow(utr)==0) {
+    col2 = c() 
+  } else {
+    col2<-col_factor(c(adjustcolor('#CA151D',alpha.f=1),adjustcolor('#214DA0',alpha.f=1)),levels=c("insertion","allele"))(utr$V4)
+    col1<-col_factor(c(adjustcolor('#CA151D',alpha.f=1),adjustcolor('#214DA0',alpha.f=1)),levels=c("insertion","allele"))(utr$V4)
+    rect(csize$V1-wid,r+utr$V2,csize$V1+wid,r+utr$V2+5000*80,border="NA",col=col1)
+    text(csize$V1+wid*3,r+utr$V2,utr$V5,cex=1,col="red")
+  }
+  if (nrow(cds)==0) {
+    col2 = c()
+  } else {
+    col2<-col_factor(c(adjustcolor('#CA151D',alpha.f=1),adjustcolor('#214DA0',alpha.f=1)),levels=c("insertion","allele"))(cds$V4)
+    col1<-col_factor(c(adjustcolor('#CA151D',alpha.f=1),adjustcolor('#214DA0',alpha.f=1)),levels=c("insertion","allele"))(cds$V4)
+    rect(csize$V1-wid,r+cds$V2,csize$V1+wid,r+cds$V2+5000*80,border="NA",col=col1)
+    text(csize$V1+wid*3,r+cds$V2,cds$V5,cex=1,col="blue")
+  }
+}
+dev.off()
