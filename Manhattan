@@ -1,0 +1,43 @@
+args<-commandArgs(TRUE)
+infile<-args[1]
+prefix<-args[2]
+a<-read.table(infile,header=T,sep="\t")
+png(paste(prefix,"Manhattan.png",sep=""),w=480,h=160,units="px",pointsize=24)
+opar=par(no.readonly = TRUE)
+chr_info=unique(a$CHR)
+add_len=0
+x=c()
+col=c()
+tmp.col = "orangered"
+xlabels_loc = c()
+for (i in chr_info) {
+  if (length(x) == 0) {
+    xlabels_loc = c(xlabels_loc,max(a[which(a$CHR == i),2])/2)
+  } else {
+    xlabels_loc = c(xlabels_loc,max(x)+max(a[which(a$CHR == i),2])/2)
+  }
+  x = c(x, a[which(a$CHR == i),2]+add_len )
+  if (tmp.col == "orangered") {
+    col=c(col,rep("orangered",length(a[which(a$CHR == i),2])))
+    tmp.col="navyblue"
+  } else {
+    col=c(col,rep("navyblue",length(a[which(a$CHR == i),2])))
+    tmp.col="orangered"
+  }
+  add_len = add_len + max(a[which(a$CHR==i),2])
+}
+y = -log10(a$P)
+cutOff=0.01
+bonferroniCutOff=-log10(cutOff/length(x))
+par(xaxs="i",yaxs="i",xaxt="n",yaxt="n")
+par(mar=c(0,0,0,0),mgp=c(0,0,0))
+plot(x,y,xlim=c(0,max(x)),ylim=c(0,max(y)),xlab="",ylab="",col=col,pch=20,cex=0.5)
+axis(1,at=xlabels_loc,labels=chr_info)
+abline(h=bonferroniCutOff,col="dimgray",lty=2, lwd=1)
+##read png
+img <- readPNG(paste(prefix,"Manhattan.png",sep=""))
+par(opar)
+par(xaxs="i",yaxs="i",xaxt="n")
+plot(0:0,type="n",xlim=c(0,max(x)),ylim=c(0,max(y)),xlab="Chromosome",ylab=expression(Observed~~-log[10](italic(p))))
+rasterImage(img,0,0,max(x), max(y))
+dev.off()
