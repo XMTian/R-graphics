@@ -1,0 +1,85 @@
+path="E:\\OneDrive - 西北农林科技大学\\研究生\\03-项目进展\\02-泛基因组\\23-可变剪切\\05-reads_count\\05-newDB\\01-LUXT01083841.1_533954_548286\\plot\\RARRES3"
+setwd(path)
+dat<-read.table("RARRES3inOUTGROUP.txt",stringsAsFactors=F,sep="\t",header=T)
+oup<-"out8.pdf"
+##plot
+opar<-par(no.readonly = TRUE)
+pdf(oup,w=16,h=12,family="ArialMT")
+par(xaxs='i',yaxs='i',lend=2,mar=c(0,0,0,0))
+bin=4
+inter=6
+plot(1:10,axes=F,xlab="",mgp = c(0, 0, 0),ylab="",xlim=c(-350,750),ylim=c(-(bin*16+inter*15.5),inter/2),type='n',xpd=NA)
+
+##plot exon region
+num = 1
+inter_len = 50
+Fixed_exon1 = 56	
+Fixed_exon2 = 108
+Fixed_exon3 = 268
+Fixed_exon4 = 107
+y1 = 0
+y2 = 0
+rect(-200,-(bin*16+inter*15.5),750,-(bin*16+inter*15.5)+(bin+inter),col="#FDFFEB",border=NA)
+rect(-200,-(bin*16+inter*15.5)+(bin+inter),750,-(bin*16+inter*15.5)+(bin+inter)+(bin+inter)*2,col="#E2EFF5",border=NA)
+rect(-200,-(bin*16+inter*15.5)+(bin+inter)+(bin+inter)*2,750,inter/2,col="#F7E2E1",border=NA)
+for (i in dat$Species) {
+  num_exon = 1
+  x1 = 0
+  x2=0
+  add_y = ifelse(num==1,0,bin+inter)
+  y1 = y1 - add_y 
+  y2 = y1 - bin
+  text(-100,y1-bin/2,dat[dat$Species==i,1],cex=2.5,font=2)
+  #text(750,y1-bin/2,dat[dat$Species==i,6],cex=2.5,font=2)
+  for (exon in dat[dat$Species==i,c("exon1","exon2","exon3","exon4")]) {
+    inter_len = ifelse(num_exon == 1,0,50)
+    if (num_exon == 1) {
+      if (exon > 1) {
+        x1 = x2 + inter_len
+        x2 = x1 + exon
+        y1 = y1
+        y2 = y2
+        rect(x1,y1,x2,y2,col="#1973B3",lwd=0.01,border="black")
+        exon1 = 1
+      } else {
+        x1 = x2 + inter_len
+        x2 = x1 + get(paste("Fixed_exon",num_exon,sep="")) 
+        y1 = y1
+        y2 = y2
+        exon1 = 0
+      }
+    } else {
+      if (exon > 1) {
+        x1 = x2 + inter_len
+        if (exon1 == 0){
+          
+        } else {
+          lines(c(x2,(x1+x2)/2,x1),c(y1-bin*3/4,y1-bin*1/4,y1-bin*3/4),cex=2)
+        }
+        x2 = x1 + exon
+        y1 = y1
+        y2 = y2
+        rect(x1,y1,x2,y2,col="#1973B3",lwd=0.01,border="black")
+        exon1 = 1
+      } else {
+        x1 = x2 + inter_len
+        x2 = x1 + get(paste("Fixed_exon",num_exon,sep="")) 
+        y1 = y1
+        y2 = y2
+        exon1 = 1
+      }
+    }
+    num_exon = num_exon + 1
+  }
+  num = num + 1
+  num_exon = 1
+}
+
+##add text
+rect(-350,-(bin*16+inter*15.5)+(bin+inter)+(bin+inter)*2,-200,inter/2,col="#BCB8B7",border=NA)
+rect(-350,-(bin*16+inter*15.5)+(bin+inter),-200,-(bin*16+inter*15.5)+(bin+inter)+(bin+inter)*2,col="#999999",border=NA)
+rect(-350,-(bin*16+inter*15.5),-200,-(bin*16+inter*15.5)+(bin+inter),col="#BCB8B7",border=NA)
+text(-275,((-(bin*16+inter*15.5)+(bin+inter)+(bin+inter)*2)+(0))/2,"Mammal",cex=2.5,font=2)
+text(-275,((-(bin*16+inter*15.5)+(bin+inter))+(-(bin*16+inter*15.5)+(bin+inter)+(bin+inter)*2))/2,"Bird",cex=2.5,font=2)
+text(-275,((-(bin*16+inter*15.5)+(-(bin*16+inter*15.5)+(bin+inter)))/2),"Fish",cex=2.5,font=2)
+dev.off()
