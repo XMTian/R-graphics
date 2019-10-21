@@ -1,0 +1,99 @@
+library(ggplot2)
+setwd("E:\\OneDrive - 西北农林科技大学\\研究生\\03-项目进展\\04-人泛基因组\\13-画图\\频率直方图")
+blue="#4A61AA"
+red="#EF4437"
+green="#529044"
+#length
+novel.len=read.csv("insertion_allele_length",sep="\t",head=T,stringsAsFactors=F)
+p <- ggplot(novel.len) + geom_density(aes(x = length,color=type ),show.legend=FALSE)+stat_density(aes(x=length, colour=type),geom="line",position="identity")+xlim(c(400,10000))+theme_bw()+xlab("Sequence length (bp)")+ylab("Density")+theme(axis.text=element_text(size=14,color="black"),axis.title=element_text(size=14,face="bold"))+ theme(legend.position = c(0.75, 0.75),legend.title=element_blank()) 
+p0<-p+theme( panel.grid.major = element_blank(),panel.grid.minor = element_blank()) + scale_color_manual(values=c(red,blue,green)) + theme(legend.text=element_text(size=12))
+
+#freq
+allele.freq=read.csv("allele_frquency_confident",sep="\t",head=T,stringsAsFactors=F)
+p <- ggplot(allele.freq, aes(x = freq)) + geom_histogram(binwidth = 1, fill = red, colour = "black")+theme_bw()+xlab("Frequency of divergent alleles")+ylab("Sequence count")+theme(axis.text=element_text(size=14,color="black"),axis.title=element_text(size=14,face="bold"))+xlim(c(0,31))
+p1<-p+theme( panel.grid.major = element_blank(),panel.grid.minor = element_blank())
+
+insertion.freq=read.csv("insertion_frquency_confident",sep="\t",head=T,stringsAsFactors=F)
+p <- ggplot(insertion.freq, aes(x = freq)) + geom_histogram(binwidth = 1, fill = blue, colour = "black")+theme_bw()+xlab("Frequency of insertions")+ylab("Sequence count")+theme(axis.text=element_text(size=14,color="black"),axis.title=element_text(size=14,face="bold"))
+p2<-p+theme( panel.grid.major = element_blank(),panel.grid.minor = element_blank())
+
+ambi.freq=read.csv("ambiguous_frquency_confident",sep="\t",head=T,stringsAsFactors=F)
+p <- ggplot(ambi.freq, aes(x = freq)) + geom_histogram(binwidth = 1, fill = green, colour = "black")+theme_bw()+xlab("Frequency of ambiguous sequences")+ylab("Sequence count")+theme(axis.text=element_text(size=14,color="black"),axis.title=element_text(size=14,face="bold"))
+p3<-p+theme( panel.grid.major = element_blank(),panel.grid.minor = element_blank())
+
+multiplot(p2, p3, p1,p0, cols=2)
+
+ggsave("novel.freq.pdf", width = 30, height = 20, units = "cm",dpi=300)
+
+######repeat in novel
+library(reshape)
+novel.repeat=read.csv("insertion.vs.allele.repeat.txt",sep="\t",head=T,stringsAsFactors=F)
+repeat2=melt(novel.repeat,id="X")
+# Make a stacked barplot--> it will be in %!
+p <- ggplot(repeat2, aes(x=variable,y=value,fill=factor(X, levels=c("Non-TE","DNA", "LTR", "SINE","LINE")))) + geom_bar( stat="identity", position="fill") +scale_fill_brewer(palette = "Set2")+theme_bw()+xlab("")
+p0=p+scale_y_continuous(breaks=c(0.00,0.25,0.50,0.75,1.00),labels=c("0","25","50","75","100"))+ylab("Percentage (%)") +guides(fill=guide_legend(title=""))+theme(axis.text=element_text(size=16,face="bold",color="black"),axis.title=element_text(size=14,face="bold"))
+ggsave("TE.novel.pdf", width = 20, height = 20, units = "cm",dpi=300)
+
+######repeat in flanking 
+novel.repeat=read.csv("Allele-insertion-ambiguous-flank5k.txt",sep="\t",head=T,stringsAsFactors=F)
+repeat2=melt(novel.repeat,id="X")
+p <- ggplot(repeat2, aes(x=variable,y=value,fill=factor(X, levels=c("Non-TE","DNA", "LTR", "SINE","LINE")))) + geom_bar( stat="identity", position="fill") +scale_fill_brewer(palette = "Set2")+theme_bw()+xlab("")+scale_x_discrete(labels=c("Allele.flank5k" = "Divergent allele", "Insertion.flank5k" = "Insertion","Ambiguous.flank5k" = "Ambiguous"))
+p1=p+scale_y_continuous(breaks=c(0.00,0.25,0.50,0.75,1.00),labels=c("0","25","50","75","100"))+ylab("Percentage (%)") +guides(fill=guide_legend(title=""))+theme(axis.text=element_text(size=16,face="bold",color="black"),axis.title=element_text(size=14,face="bold"))
+ggsave("TE.novelflanking.pdf", width = 20, height = 20, units = "cm",dpi=300)
+
+
+#TRF allele insertion和ambigous的比较
+novel.len=read.csv("trf.csv",sep="\t",head=T,stringsAsFactors=F)
+novel.len$type = factor(novel.len$type, levels=c('allele','insertion','ambiguous'))
+p=ggplot(novel.len,aes(x=type,y=trf,fill=type))+geom_violin(alpha=0.8,width=1)+theme_bw()+ylab("Tandem repeat content (%)")+xlab("")+ theme(legend.position="none")
+p2=p+scale_y_continuous(breaks=c(0.00,0.25,0.50,0.75,1.00),labels=c("0","25","50","75","100"))+ylab("Tandem repeat content (%)") +guides(fill=guide_legend(title=""))+scale_x_discrete(labels=c("allele" = "Divergent allele", "insertion" = "Insertion","ambiguous" = "Ambiguous"))+theme(axis.text=element_text(size=16,face="bold",color="black"),axis.title=element_text(size=14,face="bold"))
+
+#flanking
+#
+novel.len=read.csv("confident.novel.flank5k.tr.csv",sep=",",head=T,stringsAsFactors=F)
+novel.len$type = factor(novel.len$type, levels=c('Divergent','Insertion','Ambiguous'))
+p=ggplot(novel.len,aes(x=type,y=trf,fill=type))+geom_violin(alpha=0.8,width=1)+theme_bw()+ylab("Tandem repeat content (%)")+xlab("")+ theme(legend.position="none")+theme(axis.text=element_text(size=12,color="black"))
+p3=p+scale_y_continuous(breaks=c(0.00,0.25,0.50,0.75,1.00),labels=c("0","25","50","75","100"))+ylab("Tandem repeat content (%)") +guides(fill=guide_legend(title=""))+theme(axis.text=element_text(size=16,face="bold"),axis.title=element_text(size=14,face="bold"))+scale_x_discrete(labels=c("Divergent" = "Divergent allele", "Insertion" = "Insertion","Ambiguous" = "Ambiguous"))
+ggsave("TR.novelflanking.pdf", width = 20, height = 20, units = "cm",dpi=300)
+
+multiplot(p0, p2, p1,p3, cols=2)
+
+#p + scale_x_discrete(labels=c("0.5" = "Dose 0.5", "1" = "Dose 1","2" = "Dose 2"))
+
+
+
+multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
+  library(grid)
+  
+  # Make a list from the ... arguments and plotlist
+  plots <- c(list(...), plotlist)
+  
+  numPlots = length(plots)
+  
+  # If layout is NULL, then use 'cols' to determine layout
+  if (is.null(layout)) {
+    # Make the panel
+    # ncol: Number of columns of plots
+    # nrow: Number of rows needed, calculated from # of cols
+    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
+                     ncol = cols, nrow = ceiling(numPlots/cols))
+  }
+  
+  if (numPlots==1) {
+    print(plots[[1]])
+    
+  } else {
+    # Set up the page
+    grid.newpage()
+    pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
+    
+    # Make each plot, in the correct location
+    for (i in 1:numPlots) {
+      # Get the i,j matrix positions of the regions that contain this subplot
+      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+      
+      print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
+                                      layout.pos.col = matchidx$col))
+    }
+  }
+}
