@@ -1,0 +1,18 @@
+path="E:\\OneDrive - 西北农林科技大学\\研究生\\03-项目进展\\04-人泛基因组\\14-富集\\01-whole-allele"
+setwd(path)
+library(ggplot2)
+pathway = read.table("KEGG-气泡图-top20.txt",header=T,sep="\t")
+oup<-"Top20KEGG.pdf"
+pdf(oup,w=8,h=6,family="ArialMT")
+##plot
+p = ggplot(pathway,aes(richFactor,Pathway))
+p=p + geom_point()
+p=p + geom_point(aes(size=innum))
+pbubble = p + geom_point(aes(size=innum,color=-1*log10(Qvalue)))
+pbubble =pbubble+ scale_colour_gradient(low="blue",high="red")
+pr = pbubble + scale_colour_gradient(low="blue",high="red") + 
+  labs(color=expression(-log[10](Qvalue)),size="Gene number",
+       x="Rich factor",y="Pathway name",title="Top20 of pathway enrichment")
+pr=pr + theme_bw()
+pr
+dev.off()
