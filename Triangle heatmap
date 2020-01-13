@@ -1,0 +1,78 @@
+args<-commandArgs(TRUE)
+INFILE<-args[1]
+OUP<-args[2]
+LOG<-args[3]
+library(RColorBrewer)
+library(scales)
+IntAct<-read.table(INFILE,stringsAsFactors=F,sep="\t",header=F)
+#########global setting
+opar<-par(no.readonly = TRUE)
+pdf(paste(OUP,".pdf",sep=""),w=18,h=12)
+#windowsFonts(Times=windowsFont(family = "Times New Roman"))
+par(xaxs='i',yaxs='i',lend=2,mar=c(2,0.5,0.5,0.5),mgp=c(0.5,0,0))
+##plot main part
+MaxLen = max(IntAct$V1,IntAct$V2)-min(IntAct$V1,IntAct$V2)+1
+plot(1:10,axes=F,xlab="",mgp = c(3, 0, 0),ylab="",xlim=c(-5,MaxLen*sqrt(2)+5),ylim=c(-5,MaxLen*sqrt(2)/2+5),type='n',xpd=NA)
+bwin1 = 0
+bwin2 = 0
+x1=0
+y1=0
+for (win1 in unique(IntAct$V1)){
+  Subdata = IntAct[IntAct$V1==win1,]
+  for (win2 in Subdata$V2){
+    SubLine = Subdata[Subdata$V2==win2,]
+    x1 = x1 + (win1-bwin1)*sqrt(2)/2 + (win2-bwin2)*sqrt(2)/2
+    y1 = y1 - (win1-bwin1)*sqrt(2)/2 + (win2 - bwin2)*sqrt(2)/2
+    x2 = x1 + sqrt(2)/2
+    y2 = y1 + sqrt(2)/2
+    x3 = x1 + sqrt(2)
+    y3 = y1
+    x4 = x1 + sqrt(2)/2
+    y4 = y1 - sqrt(2)/2
+    if (win1 == win2) {
+      px<-c(x1,x2,x3)
+      py<-c(y1,y2,y3)
+    }else {
+      px<-c(x1,x2,x3,x4)
+      py<-c(y1,y2,y3,y4)
+    }
+    if (LOG == 'nolog'){
+      ## no log
+      MaxValue = round(max(IntAct$V3))
+      polygon(px,py,border=FALSE,col=col_factor(c('#FFFFFF','#FF5353'), levels = seq(0,MaxValue,1))(round(SubLine$V3)))
+    } else if (LOG == 'log2') {
+      ##log 2
+      MaxValue = round(log(max(IntAct$V3)+1,2),1)
+      polygon(px,py,border=FALSE,col=col_factor(c('#FFFFFF','#FF5353'), levels = seq(0,MaxValue,0.1))(round(log(SubLine$V3+1,2),1)))
+    } else if (LOG == 'log10') {
+      ##log 10
+      MaxValue = round(log(max(IntAct$V3)+1,10),1)
+      polygon(px,py,border=FALSE,col=col_factor(c('#FFFFFF','#FF5353'), levels = seq(0,MaxValue,0.1))(round(log(SubLine$V3+1,10),1)))
+    }
+    bwin1 = SubLine$V1
+    bwin2 = SubLine$V2
+  }
+}
+##plot legend
+for (i in seq(0,10,1)){
+  x = MaxLen*sqrt(2)*(1-0.1)
+  y = MaxLen*sqrt(2)/2*(1-0.6) + 0.04*MaxLen*sqrt(2)/2*i
+  rect(x,y,x*1.03,y+MaxLen*sqrt(2)/2*0.04,col=col_factor(c('#FFFFFF','#FF5353'), levels = seq(0,MaxValue,0.1))(round(i/10*MaxValue,1)))
+  text(x*1.05,y+MaxLen*sqrt(2)/2*0.02,round(i/10*MaxValue,1),cex=1)
+}
+dev.off()
+
+
+##input
+###
+0	0	2470.908542
+0	1	982.300548
+0	2	433.337538
+0	3	1320.380731
+1	1	2434.709143
+1	2	1139.825505
+1	3	526.312874
+2	2	2155.380811
+2	3	1128.065279
+3	3	2091.096787
+###
