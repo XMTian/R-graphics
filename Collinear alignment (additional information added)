@@ -1,0 +1,215 @@
+args<-commandArgs(TRUE)
+DATA<-args[1]
+NLEN<-args[2]
+GTF<-args[3]
+GAP<-args[4]
+NGAP<-args[5]
+GC<-args[6]
+NGC<-args[7]
+G4<-args[8]
+NG4<-args[9]
+RP<-args[10]
+NRP<-args[11]
+OUP<-args[12]
+dat<-read.table(DATA,header=F,sep="\t",dec = ".", comment.char = "")
+gtf<-read.table(GTF,sep="\t",header=FALSE)
+nLen<-read.table(NLEN,sep="\t",header=FALSE,dec = ".", comment.char = "")
+gap<-read.table(GAP,sep="\t",header=FALSE)
+ngap<-read.table(NGAP,sep="\t",header=FALSE)
+gc<-read.table(GC,sep="\t",header=FALSE)
+ngc<-read.table(NGC,sep="\t",header=FALSE)
+g4<-read.table(G4,sep="\t",header=FALSE)
+ng4<-read.table(NG4,sep="\t",header=FALSE)
+rp<-read.table(RP,sep="\t",header=FALSE)
+nrp<-read.table(NRP,sep="\t",header=FALSE)
+##global setting
+pdf(paste(OUP,".pdf",sep=""),w=10,h=8)
+#windowsFonts(Times=windowsFont(family = "Times New Roman"))
+par(xaxs='i',yaxs='i',lend=2,mar=c(2,0.5,0.5,0.5),mgp=c(0.5,0,0))
+qlen<-nLen$V4-nLen$V3+1
+tlen<-max(dat$V10,dat$V11)-min(dat$V10,dat$V11)+1
+max_len<-max(qlen,tlen)
+tmin<-min(dat$V10,dat$V11)
+qmin<-nLen$V3
+plot(1:10,axes=F,xlab="",mgp = c(3, 0, 0),ylab="",xlim=c(-max_len*0.04,max_len*1.02),ylim=c(-8,8),type='n',xpd=NA)
+##plot main line
+rect(1,-1,qlen,-1.2,border=NA,col="#CCCCCC")
+rect(1,1,tlen,1.2,border=NA,col="#CCCCCC")
+##global setting
+TChr=as.character(unique(dat$V2))
+Tstart<-as.numeric(min(dat$V10,dat$V11))
+Tend<-as.numeric(max(dat$V10,dat$V11))
+##plot gene
+cgtf<-gtf[gtf$V1==TChr&((gtf$V2>=Tstart&gtf$V2<=Tend)|(gtf$V3>=Tstart&gtf$V3<=Tend)|(gtf$V2<=Tstart&gtf$V3>=Tend)),]
+for (gene in as.character(unique(cgtf$V4))){
+  ccgtf<-cgtf[cgtf$V5=="gene",]
+  gene_start<-ccgtf[ccgtf$V4==gene,][2]-tmin
+  gene_end<-ccgtf[ccgtf$V4==gene,][3]-tmin
+  rect(gene_start,1,gene_end,1.2,col="#0000FF",border=NA)
+  if ((gene_start+gene_end)/2 <0 ){
+    text(0,1.8,gene,adj=0)
+  }else if ((gene_start+gene_end)/2 > tlen){
+    text(tlen,1.8,gene,adj=1)
+  } else{
+    text((gene_start+gene_end)/2,1.8,gene)
+  }
+}
+##plot ref legend
+text(1,0.7,paste(TChr,as.character(Tstart),sep=":"),cex=0.5)
+text(tlen,0.7,paste(TChr,as.character(Tend),sep=":"),cex=0.5)
+##plot gap
+ymin=1
+ymax=1.2
+cgap<-gap[gap$V1==TChr&((gap$V2>=Tstart&gap$V2<=Tend)|(gap$V3>=Tstart&gap$V3<=Tend)|(gap$V2<=Tstart&gap$V3>=Tend)),]
+for (pos in as.character(unique(cgap$V2))){
+  ccgap<-cgap[cgap$V2==pos,]
+  gap_start<-cgap[cgap$V2==pos,][2]-tmin
+  gap_end<-cgap[cgap$V2==pos,][3]-tmin
+  rect(gap_start,ymin,gap_end,ymax,col="#000000",border=NA)
+}
+##plot exon
+ymin=0.8
+ymax=1.4
+for (exon_start in cgtf[cgtf$V5=="exon",]$V2){
+  ccgtf<-cgtf[(cgtf$V2==exon_start)&(cgtf$V5=="exon"),]
+  exon_end<-ccgtf$V3-tmin
+  exon_start<-ccgtf$V2-tmin
+  rect(exon_start,ymin,exon_end,ymax,col="#0000FF",border=NA)
+}
+##plot align
+n=1
+novel<-c(strsplit(as.character(nLen$V1),split="_extend_"),recursive=T)[1]
+novel_start<-as.numeric(c(strsplit(novel,split="#"),recursive=T)[3])
+novel_end<-as.numeric(c(strsplit(novel,split="#"),recursive=T)[4])
+for(i in 1:nrow(dat)){
+  cdat<-dat[i,]
+  tstart<-cdat$V10 - tmin
+  tend<-cdat$V11 - tmin
+  if (sum(cdat$V11-cdat$V10) >= 0){
+    qstart<-cdat$V8-qmin
+    qend<-cdat$V9-qmin
+    rect(novel_start-qmin,-1.2,novel_end-qmin,-1,col="#FFFF00",border=NA)
+  } else{
+    qstart<-qlen-(cdat$V8-qmin)
+    qend<-qlen-(cdat$V9-qmin)
+    rect(qlen-(novel_start-qmin),-1.2,qlen-(novel_end-qmin),-1,col="#FFFF00",border=NA)
+  }
+  xx<-c(qstart,tstart,tend,qend,qstart)
+  yy<-c(-1,1,1,-1,-1)
+  ident<-cdat$V3
+  polygon(xx,yy,border=NA,col=ifelse(ident>=90,adjustcolor('#008000',alpha.f=0.2),adjustcolor('red',alpha.f=0.2)))
+  text((qstart+qend+tstart+tend)/4,(1+(-1))/2-0.2*n,paste(cdat$V3,"%",sep=""),cex=0.8)
+  n=n*(-1)
+}
+text(qlen/2,-1.7,nLen$V1)
+##plot ref gc
+ymin=2
+ymax=3
+cgc<-gc[gc$V1==TChr&(gc$V2>=Tstart&gc$V2<=Tend),]
+xx<-c(0,0,cgc$V2-tmin,tlen,tlen)
+yy<-c(ymin,ymin+head(cgc$V3,1),ymin+cgc$V3,ymin+tail(cgc$V3,1),ymin)
+polygon(xx,yy,col="#D3E4DA",border=NA)
+text(-max_len*0.015,ymin+0.3,"GC")
+rect(0,ymin+0.42,tlen,ymin+0.42+0.01,col="#3C6950",border=NA)
+text(0,ymin+0.55,0.42,cex=0.5)
+##plot ref G4
+ymin=4
+ymax=4.2
+cg4<-g4[g4$V1==TChr&((g4$V2>=Tstart&g4$V2<=Tend)|(g4$V3>=Tstart&g4$V3<=Tend)|(g4$V2<=Tstart&g4$V3>=Tend)),]
+for (pos in as.character(unique(cg4$V2))){
+  ccg4<-cg4[cg4$V2==pos,]
+  rect(ccg4$V2-tmin,ymin,ccg4$V3-tmin,ymax,col="#CCCCCC",border=NA)
+}
+text(-max_len*0.015,ymin,"G4")
+##plot ref repeat
+ymin=5
+ymax=5.2
+crp<-rp[rp$V1==TChr&((rp$V2>=Tstart&rp$V2<=Tend)|(rp$V3>=Tstart&rp$V3<=Tend)|(rp$V2<=Tstart&rp$V3>=Tend)),]
+for (pos in crp$V2){
+  ccrp<-crp[crp$V2==pos,]
+  rect(ccrp$V2-tmin,ymin,ccrp$V3-tmin,ymax,col="#305496",border=NA)
+}
+text(-max_len*0.015,ymin,"TRF")
+##global setting 
+QChr=as.character(unique(nLen$V2))
+Qstart<-nLen$V3
+Qend<-nLen$V4 
+##plot novel legend
+if (sum(cdat$V11-cdat$V10) >= 0){
+  text(1,-0.7,paste(QChr,as.character(Qstart),sep=":"),cex=0.5)
+  text(qlen,-0.7,paste(QChr,as.character(Qend),sep=":"),cex=0.5)
+}else {
+  text(qlen,-0.7,paste(QChr,as.character(Qstart),sep=":"),cex=0.5)
+  text(1,-0.7,paste(QChr,as.character(Qend),sep=":"),cex=0.5)
+}
+##plot novel gap
+ymin=-1.2
+ymax=-1
+cngap<-ngap[ngap$V1==QChr&((ngap$V2>=Qstart&ngap$V2<=Qend)|(ngap$V3>=Qstart&ngap$V3<=Qend)|(ngap$V2<=Qstart&ngap$V3>=Qend)),]
+for (pos in cngap$V2){
+  ccngap<-cngap[cngap$V2==pos,] 
+  if (sum(cdat$V11-cdat$V10) >= 0){
+    rect(ccngap$V2-qmin,ymin,ccngap$V3-qmin,ymax,col="#000000",border=NA)
+  } else{
+    rect(qlen-(ccngap$V2-qmin),ymin,qlen-(ccngap$V3-qmin),ymax,col="#000000",border=NA)
+  }
+}
+##plot novel gc
+ymin=-3
+ymax=-2
+cngc<-ngc[ngc$V1==QChr&(ngc$V2>=Qstart&ngc$V2<=Qend),]
+if (sum(cdat$V11-cdat$V10) >= 0){
+  xx<-c(0,0)
+  yy<-c(ymin,ymin+head(cngc$V3,1))
+}else{
+  xx<-c(qlen,qlen)
+  yy<-c(ymin,ymin+head(cngc$V3,1))
+}
+for (pos in cngc$V2){
+  ccngc<-cngc[cngc$V2==pos,]
+  if (sum(cdat$V11-cdat$V10) >= 0){
+    xx<-c(xx,ccngc$V2-qmin)
+    yy<-c(yy,ymin+ccngc$V3)
+  }else {
+    xx<-c(xx,qlen-(ccngc$V2-qmin))
+    yy<-c(yy,ymin+ccngc$V3)
+  }
+}
+if (sum(cdat$V11-cdat$V10) >= 0){
+  xx<-c(xx,qlen,qlen)
+  yy<-c(yy,ymin+tail(cngc$V3,1),ymin)
+}else{
+  xx<-c(xx,0,0)
+  yy<-c(yy,ymin+tail(cngc$V3,1),ymin)
+}
+polygon(xx,yy,col="#D3E4DA",border=NA)
+text(-max_len*0.015,ymin+0.3,"GC")
+text(0,ymin+0.55,0.42,cex=0.5)
+rect(0,ymin+0.42,qlen,ymin+0.42+0.01,col="#3C6950",border=NA)
+##plot novel G4
+ymin=-4.2
+ymax=-4
+cng4<-ng4[ng4$V1==QChr&((ng4$V2>=Qstart&ng4$V2<=Qend)|(ng4$V3>=Qstart&ng4$V3<=Qend)|(ng4$V2<=Qstart&ng4$V3>=Qend)),]
+for (pos in cng4$V2){
+  ccng4<-cng4[cng4$V2==pos,] 
+  if (sum(cdat$V11-cdat$V10) >= 0){
+    rect(ccng4$V2-qmin,ymin,ccng4$V3-qmin,ymax,col="#CCCCCC",border=NA)
+  } else{
+    rect(qlen-(ccng4$V2-qmin),ymin,qlen-(ccng4$V3-qmin),ymax,col="#CCCCCC",border=NA)
+  }
+}
+text(-max_len*0.015,ymin,"G4")
+##plot novel repeat
+ymin=-5.2
+ymax=-5
+cnrp<-nrp[nrp$V1==QChr&((nrp$V2>=Qstart&nrp$V2<=Qend)|(nrp$V3>=Qstart&nrp$V3<=Qend)|(nrp$V2<=Qstart&nrp$V3>=Qend)),]
+for (pos in cnrp$V2){
+  ccnrp<-cnrp[cnrp$V2==pos,] 
+  if (sum(cdat$V11-cdat$V10) >= 0){
+    rect(ccnrp$V2-qmin,ymin,ccnrp$V3-qmin,ymax,col="#305496",border=NA)
+  } else{
+    rect(qlen-(ccnrp$V2-qmin),ymin,qlen-(ccnrp$V3-qmin),ymax,col="#305496",border=NA)
+  }
+}
+text(-max_len*0.015,ymin,"TRF")
+dev.off()
