@@ -1,0 +1,60 @@
+#!/bin/bash
+if [ $# -ne 2 ]; then
+echo "error.. need args"
+ echo "command:$0 <NovelRegion> <ExtendLen>"
+ exit 1
+fi
+NovelRegion=$1
+ExtendLen=$2
+Refdb="blast/GRCg6a"
+GenExonBed="gene-exon.bed"
+RefGapBed="GRCg6a.gap.bed"
+RefGCBed="GRCg6a.gc.win100.count"
+RefG4Bed="GRCg6a.G4.bed"
+RefTRPBed="GRCg6a.TRF.bed"
+##Novel region file
+#am30_1727       5351    7835    Cornish_2#am30_1727#5351#7835
+#am30_427        17216   17735   Cornish_2#am30_427#17216#17735
+#am30_427        64237   67652   Cornish_2#am30_427#64237#67652
+#am30_4746       1383    2167    Cornish_2#am30_4746#1383#2167
+##prepare need file
+Assembly=`awk '{print $4}' ${NovelRegion}|awk -F '#' '{print $1}'`
+NolAssFa=`echo "01.Data/06.Assembly/link/${Assembly}.fa"`
+NolGapBed=`echo "01.Data/06.Assembly/${Assembly}/${Assembly}.N.bed"`
+NolGCBed=`echo "01.Data/06.Assembly/${Assembly}/${Assembly}.gc.win100.count"`
+NolG4Bed=`echo "/01.Data/06.Assembly/G4.notall/${Assembly}.G4.bed"`
+NolTRPBed=`echo "13.TandemRepeat/03.flank10k/01.fasta/${Assembly}/known/trf/${Assembly}.TRF.region.sort"`
+##get extended fasta and alignment
+Novel=`awk '{print $4}' ${NovelRegion}`
+python3 ~/script/PanGenome/PlotLocation/1part/extend-flanking_get_total_seq.py ${NovelRegion} ${NolAssFa} ${ExtendLen} ${Novel}-extend-${ExtendLen}.fa ${Novel}-extend-${ExtendLen}.length ${Novel}-extend-${ExtendLen}.3part
+blastn -task blastn -db ${Refdb} -query ${Novel}-extend-${ExtendLen}.fa -out ${Novel}-extend-${ExtendLen}.blastout.best -num_threads 2 -word_size 20 -max_hsps 1 -max_target_seqs 1  -dust no -soft_masking false -evalue 0.00001 -outfmt "6 qseqid sseqid pident qlen length mismatch gapopen qstart qend sstart send slen nident evalue bitscore qcovs"
+blastn -task blastn -db ${Refdb} -query ${Novel}-extend-${ExtendLen}.fa -out ${Novel}-extend-${ExtendLen}.blastout.all -num_threads 2 -word_size 20 -max_hsps 20 -max_target_seqs 1  -dust no -soft_masking false -evalue 0.00001 -outfmt "6 qseqid sseqid pident qlen length mismatch gapopen qstart qend sstart send slen nident evalue bitscore qcovs"
+python3 ~/script/PanGenome/PlotLocation/1part/change_novel.py -b ${Novel}-extend-${ExtendLen}.blastout.best -l ${Novel}-extend-${ExtendLen}.3part -o ${Novel}-extend-${ExtendLen}.blastout.best.change
+python3 ~/script/PanGenome/PlotLocation/1part/change_novel.py -b ${Novel}-extend-${ExtendLen}.blastout.all -l ${Novel}-extend-${ExtendLen}.3part -o ${Novel}-extend-${ExtendLen}.blastout.all.change
+##filter blastout
+Start=`awk '{print $10}' ${Novel}-extend-${ExtendLen}.blastout.best`
+End=`awk '{print $11}' ${Novel}-extend-${ExtendLen}.blastout.best`
+if [ ${Start} -gt ${End} ]
+then
+    tmp=${Start}
+    Start=${End}
+    End=${tmp}
+else 
+    echo "${Novel}"
+fi
+RefChr=`awk '{print $2}' ${Novel}-extend-${ExtendLen}.blastout.best`
+Start=`expr ${Start} - ${ExtendLen}`
+End=`expr ${End} + ${ExtendLen}`
+awk '$2==RefChr&&(($10>=Start&&$10<=End)||($11>=Start&&$11<=End)||($10<=Start&&$11>=End)||($11<=Start&&$10>=End))' RefChr=${RefChr} Start=${Start} End=${End} ${Novel}-extend-${ExtendLen}.blastout.all.change > ${Novel}-extend-${ExtendLen}.blastout.all.change.filtered
+##plot
+Rscript ~/script/PanGenome/PlotLocation/1part/plot-extend-withoutNovelGene.V11.R ${Novel}-extend-${ExtendLen}.blastout.all.change.filtered ${Novel}-extend-${ExtendLen}.length ${GenExonBed} ${RefGapBed} ${NolGapBed} ${RefGCBed} ${NolGCBed} ${RefG4Bed} ${NolG4Bed} ${RefTRPBed} ${NolTRPBed} ${Novel}-extend-${ExtendLen}
+rm -f ${Novel}.region
+rm -f ${Novel}-extend-${ExtendLen}.3part
+rm -f ${Novel}-extend-${ExtendLen}.length
+rm -f ${Novel}-extend-${ExtendLen}.fa
+rm -f ${Novel}-extend-${ExtendLen}.blastout.best
+rm -f ${Novel}-extend-${ExtendLen}.blastout.all
+rm -f ${Novel}-extend-${ExtendLen}.blastout.best.change
+rm -f ${Novel}-extend-${ExtendLen}.blastout.all.change
+rm -f ${Novel}-extend-${ExtendLen}.blastout.all.change.filtered
+
